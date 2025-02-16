@@ -49,16 +49,20 @@ class Kostal:
     session_id = 'XXX'
     sw_version = ''
     position = 0
+    phaseL1 = 1
+    switchL2L3 = False
     dev_state = DevState.WaitForDevice
     dbus_inverter = []
 
-    def __init__(self, name, ip, instance, password, interval, position):
+    def __init__(self, name, ip, instance, password, interval, position, phaseL1, switchL2L3):
         self.inverter_name = name
         self.ip = ip
         self.instance = instance
         self.password = password
         self.interval = interval
         self.position = position
+        self.phaseL1 = phaseL1
+        self.switchL2L3 = switchL2L3
 
 
 global inverter
@@ -87,6 +91,18 @@ def parse_config():
     if len(parser.sections()) == 0:
         print("config seems to be empty...")
         exit(1)
+
+    def get_L1(section):
+        if parser.has_option(section, 'PhaseL1'):
+            return parser.get(section, 'PhaseL1')
+        else:
+            return 1
+            
+    def get_SwitchL2L3(section):
+        if parser.has_option(section, 'SwitchL1L2'):
+            return parser.getboolean(section, 'SwitchL1L2')
+        else:
+            return False
 
     def get_password(section):
         if parser.has_option(section, 'password'):
@@ -131,7 +147,7 @@ def parse_config():
     section = parser.sections()[0]
 
     inverter = Kostal(section, get_ip(section), get_instance(section), get_password(section), get_interval(section),
-                      get_position(section))
+                      get_position(section), get_L1(section), get_SwitchL2L3(section))
 
     print('Found config: ' + section)
 
@@ -151,15 +167,60 @@ def set_dbus_data(data):
 
         inverter.dbus_inverter.set('/Ac/Power', (data['PT']))
         inverter.dbus_inverter.set('/Ac/Current', (data['IN0']), 1)
-        inverter.dbus_inverter.set('/Ac/L1/Current', (data['IA']), 1)
-        inverter.dbus_inverter.set('/Ac/L1/Voltage', (data['VA']))
-        inverter.dbus_inverter.set('/Ac/L1/Power', (data['PA']))
-        inverter.dbus_inverter.set('/Ac/L2/Current', (data['IB']), 1)
-        inverter.dbus_inverter.set('/Ac/L2/Voltage', (data['VB']))
-        inverter.dbus_inverter.set('/Ac/L2/Power', (data['PB']))
-        inverter.dbus_inverter.set('/Ac/L3/Current', (data['IC']), 1)
-        inverter.dbus_inverter.set('/Ac/L3/Voltage', (data['VC']))
-        inverter.dbus_inverter.set('/Ac/L3/Power', (data['PC']))
+        if inverter.phaseL1==2:
+            inverter.dbus_inverter.set('/Ac/L1/Current', (data['IB']), 1)
+            inverter.dbus_inverter.set('/Ac/L1/Voltage', (data['VB']))
+            inverter.dbus_inverter.set('/Ac/L1/Power', (data['PB']))
+            if inverter.switchL2L3==True:
+                inverter.dbus_inverter.set('/Ac/L2/Current', (data['IC']), 1)
+                inverter.dbus_inverter.set('/Ac/L2/Voltage', (data['VC']))
+                inverter.dbus_inverter.set('/Ac/L2/Power', (data['PC']))
+                inverter.dbus_inverter.set('/Ac/L3/Current', (data['IA']), 1)
+                inverter.dbus_inverter.set('/Ac/L3/Voltage', (data['VA']))
+                inverter.dbus_inverter.set('/Ac/L3/Power', (data['PA']))     
+            else:
+                inverter.dbus_inverter.set('/Ac/L2/Current', (data['IA']), 1)
+                inverter.dbus_inverter.set('/Ac/L2/Voltage', (data['VA']))
+                inverter.dbus_inverter.set('/Ac/L2/Power', (data['PA']))
+                inverter.dbus_inverter.set('/Ac/L3/Current', (data['IC']), 1)
+                inverter.dbus_inverter.set('/Ac/L3/Voltage', (data['VC']))
+                inverter.dbus_inverter.set('/Ac/L3/Power', (data['PC']))            
+        elif inverter.phaseL1==3:
+            inverter.dbus_inverter.set('/Ac/L1/Current', (data['IC']), 1)
+            inverter.dbus_inverter.set('/Ac/L1/Voltage', (data['VC']))
+            inverter.dbus_inverter.set('/Ac/L1/Power', (data['PC']))
+            if inverter.switchL2L3==True:
+                inverter.dbus_inverter.set('/Ac/L2/Current', (data['IA']), 1)
+                inverter.dbus_inverter.set('/Ac/L2/Voltage', (data['VA']))
+                inverter.dbus_inverter.set('/Ac/L2/Power', (data['PA']))
+                inverter.dbus_inverter.set('/Ac/L3/Current', (data['IB']), 1)
+                inverter.dbus_inverter.set('/Ac/L3/Voltage', (data['VB']))
+                inverter.dbus_inverter.set('/Ac/L3/Power', (data['PB']))
+            else:
+                inverter.dbus_inverter.set('/Ac/L2/Current', (data['IB']), 1)
+                inverter.dbus_inverter.set('/Ac/L2/Voltage', (data['VB']))
+                inverter.dbus_inverter.set('/Ac/L2/Power', (data['PB']))
+                inverter.dbus_inverter.set('/Ac/L3/Current', (data['IA']), 1)
+                inverter.dbus_inverter.set('/Ac/L3/Voltage', (data['VA']))
+                inverter.dbus_inverter.set('/Ac/L3/Power', (data['PA']))
+        else:
+            inverter.dbus_inverter.set('/Ac/L1/Current', (data['IA']), 1)
+            inverter.dbus_inverter.set('/Ac/L1/Voltage', (data['VA']))
+            inverter.dbus_inverter.set('/Ac/L1/Power', (data['PA']))
+            if inverter.switchL2L3==True:
+                inverter.dbus_inverter.set('/Ac/L2/Current', (data['IC']), 1)
+                inverter.dbus_inverter.set('/Ac/L2/Voltage', (data['VC']))
+                inverter.dbus_inverter.set('/Ac/L2/Power', (data['PC']))
+                inverter.dbus_inverter.set('/Ac/L3/Current', (data['IB']), 1)
+                inverter.dbus_inverter.set('/Ac/L3/Voltage', (data['VB']))
+                inverter.dbus_inverter.set('/Ac/L3/Power', (data['PB']))
+            else:            
+                inverter.dbus_inverter.set('/Ac/L2/Current', (data['IB']), 1)
+                inverter.dbus_inverter.set('/Ac/L2/Voltage', (data['VB']))
+                inverter.dbus_inverter.set('/Ac/L2/Power', (data['PB']))
+                inverter.dbus_inverter.set('/Ac/L3/Current', (data['IC']), 1)
+                inverter.dbus_inverter.set('/Ac/L3/Voltage', (data['VC']))
+                inverter.dbus_inverter.set('/Ac/L3/Power', (data['PC']))
 
         inverter.dbus_inverter.set('/Ac/Energy/Forward', (data['EFAT']))
 
@@ -180,7 +241,7 @@ def init_session():
 
 def init_dbus():
     global inverter
-    inverter.dbus_inverter = DbusInverter(inverter.inverter_name, inverter.ip, inverter.instance,
+    inverter.dbus_inverter = DbusInverter('Kostal_Plenticore_Plus_10', inverter.ip, inverter.instance,
                                           '0',
                                           inverter.inverter_name,
                                           inverter.sw_version, '0.1', inverter.position)

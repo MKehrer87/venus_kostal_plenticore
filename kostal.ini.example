@@ -1,0 +1,7 @@
+[Kostal Plenticore Plus 10]
+ip = http://***
+instance = 50
+password = ***
+interval = 5
+PhaseL1 = 2
+SwitchL2L3 = no

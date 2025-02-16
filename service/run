@@ -1,3 +1,6 @@
 #!/bin/sh
-python /data/venus_kostal_plenticore/kostal.py /data/venus_kostal_plenticore/kostal.ini
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+exec 2>&1
+python $(realpath $SCRIPT_DIR/../kostal.py $SCRIPT_DIR/../kostal.ini)
 
